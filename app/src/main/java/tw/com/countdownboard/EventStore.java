@@ -24,12 +24,31 @@ public final class EventStore {
         public final String name;
         public final LocalDate date;
         public final int color;
+        public final int repeatMonths;
 
         public Event(String id, String name, LocalDate date, int color) {
+            this(id, name, date, color, 0);
+        }
+
+        public Event(String id, String name, LocalDate date, int color, int repeatMonths) {
             this.id = id;
             this.name = name;
             this.date = date;
             this.color = color;
+            this.repeatMonths = repeatMonths;
+        }
+
+        public boolean isRecurring() {
+            return repeatMonths > 0;
+        }
+
+        public LocalDate nextDate(LocalDate today) {
+            if (!isRecurring() || !date.isBefore(today)) return date;
+            LocalDate next = date;
+            while (next.isBefore(today)) {
+                next = next.plusMonths(repeatMonths);
+            }
+            return next;
         }
     }
 
@@ -45,12 +64,14 @@ public final class EventStore {
                         obj.optString("id", UUID.randomUUID().toString()),
                         obj.optString("name", "未命名活動"),
                         LocalDate.parse(obj.getString("date")),
-                        obj.optInt("color", 0xFF4DD0E1)
+                        obj.optInt("color", 0xFF4DD0E1),
+                        obj.optInt("repeatMonths", 0)
                 ));
             }
         } catch (Exception ignored) {
         }
-        Collections.sort(result, Comparator.comparing(e -> e.date));
+        LocalDate today = LocalDate.now();
+        Collections.sort(result, Comparator.comparing(e -> e.nextDate(today)));
         return result;
     }
 
@@ -63,6 +84,7 @@ public final class EventStore {
                 obj.put("name", event.name);
                 obj.put("date", event.date.toString());
                 obj.put("color", event.color);
+                obj.put("repeatMonths", event.repeatMonths);
                 array.put(obj);
             } catch (Exception ignored) {
             }
@@ -74,8 +96,12 @@ public final class EventStore {
     }
 
     public static synchronized void add(Context context, String name, LocalDate date, int color) {
+        add(context, name, date, color, 0);
+    }
+
+    public static synchronized void add(Context context, String name, LocalDate date, int color, int repeatMonths) {
         List<Event> events = getAll(context);
-        events.add(new Event(UUID.randomUUID().toString(), name, date, color));
+        events.add(new Event(UUID.randomUUID().toString(), name, date, color, repeatMonths));
         save(context, events);
     }
 
@@ -89,10 +115,11 @@ public final class EventStore {
         LocalDate today = LocalDate.now();
         ArrayList<Event> result = new ArrayList<>();
         for (Event event : getAll(context)) {
-            if (!event.date.isBefore(today)) {
+            if (event.isRecurring() || !event.date.isBefore(today)) {
                 result.add(event);
             }
         }
+        result.sort(Comparator.comparing(e -> e.nextDate(today)));
         return result;
     }
 }
