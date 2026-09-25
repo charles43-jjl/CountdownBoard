@@ -58,7 +58,8 @@ public class CountdownWidgetService extends RemoteViewsService {
             }
 
             EventStore.Event event = events.get(position);
-            LocalDate shownDate = event.nextDate(LocalDate.now());\n            long days = ChronoUnit.DAYS.between(LocalDate.now(), shownDate);
+            LocalDate shownDate = event.nextDate(LocalDate.now());
+            long days = ChronoUnit.DAYS.between(LocalDate.now(), shownDate);
 
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_event);
             views.setTextViewText(R.id.event_name, event.name);
