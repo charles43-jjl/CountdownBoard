@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
     private Button dateButton;
     private LinearLayout palette;
     private LinearLayout eventList;
-    private Spinner repeatSpinner;
+    private Spinner repeatSpinner;\n    private EditText repeatIntervalInput;
     private LocalDate selectedDate;
     private int selectedColor;
     private final DateTimeFormatter displayDate = DateTimeFormatter.ofPattern("yyyy/MM/dd");
@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
         root.addView(repeatLabel, repeatLabelParams);
 
         repeatSpinner = new Spinner(this);
-        String[] repeatOptions = {"不重複", "每月", "每 3 個月", "每 6 個月", "每年"};
+        String[] repeatOptions = {"不重複", "每幾天", "每週", "每月（同一日）", "每年"};
         ArrayAdapter<String> repeatAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, repeatOptions);
         repeatSpinner.setAdapter(repeatAdapter);
@@ -112,6 +112,26 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(54));
         repeatParams.topMargin = dp(6);
         root.addView(repeatSpinner, repeatParams);
+
+        repeatIntervalInput = new EditText(this);
+        repeatIntervalInput.setHint("每幾天：輸入天數（例如 14）");
+        repeatIntervalInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        repeatIntervalInput.setTextColor(Color.WHITE);
+        repeatIntervalInput.setHintTextColor(Color.parseColor("#758291"));
+        repeatIntervalInput.setPadding(dp(14), 0, dp(14), 0);
+        repeatIntervalInput.setBackground(rounded(Color.parseColor("#171E27"), 14));
+        repeatIntervalInput.setVisibility(View.GONE);
+        LinearLayout.LayoutParams intervalParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(54));
+        intervalParams.topMargin = dp(8);
+        root.addView(repeatIntervalInput, intervalParams);
+
+        repeatSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                repeatIntervalInput.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
 
         TextView colorLabel = text("顏色", 14, Color.parseColor("#C6CFD9"), true);
         LinearLayout.LayoutParams labelParams = wrap();
@@ -213,9 +233,21 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "請輸入活動名稱", Toast.LENGTH_SHORT).show();
             return;
         }
-        int[] repeatMonths = {0, 1, 3, 6, 12};
-        int repeat = repeatMonths[repeatSpinner.getSelectedItemPosition()];
-        EventStore.add(this, name, selectedDate, selectedColor, repeat);
+        int repeatType = repeatSpinner.getSelectedItemPosition();
+        int repeatInterval = 0;
+        if (repeatType == 1) {
+            String rawInterval = repeatIntervalInput.getText().toString().trim();
+            if (rawInterval.isEmpty()) {
+                Toast.makeText(this, "請輸入重複的天數", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            repeatInterval = Integer.parseInt(rawInterval);
+            if (repeatInterval < 1) {
+                Toast.makeText(this, "天數至少要 1 天", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        EventStore.add(this, name, selectedDate, selectedColor, repeatType, repeatInterval);
         nameInput.setText("");
         selectedDate = LocalDate.now().plusDays(7);
         updateDateButton();
