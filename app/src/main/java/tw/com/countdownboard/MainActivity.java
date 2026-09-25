@@ -11,7 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.ScrollView;\nimport android.widget.Spinner;\nimport android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,6 +94,21 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(54));
         dateParams.topMargin = dp(12);
         root.addView(dateButton, dateParams);
+
+        TextView repeatLabel = text("重複", 14, Color.parseColor("#C6CFD9"), true);
+        LinearLayout.LayoutParams repeatLabelParams = wrap();
+        repeatLabelParams.topMargin = dp(18);
+        root.addView(repeatLabel, repeatLabelParams);
+
+        repeatSpinner = new Spinner(this);
+        String[] repeatOptions = {"不重複", "每月", "每 3 個月", "每 6 個月", "每年"};
+        ArrayAdapter<String> repeatAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, repeatOptions);
+        repeatSpinner.setAdapter(repeatAdapter);
+        LinearLayout.LayoutParams repeatParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(54));
+        repeatParams.topMargin = dp(6);
+        root.addView(repeatSpinner, repeatParams);
 
         TextView colorLabel = text("顏色", 14, Color.parseColor("#C6CFD9"), true);
         LinearLayout.LayoutParams labelParams = wrap();
@@ -195,7 +210,9 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "請輸入活動名稱", Toast.LENGTH_SHORT).show();
             return;
         }
-        EventStore.add(this, name, selectedDate, selectedColor);
+        int[] repeatMonths = {0, 1, 3, 6, 12};
+        int repeat = repeatMonths[repeatSpinner.getSelectedItemPosition()];
+        EventStore.add(this, name, selectedDate, selectedColor, repeat);
         nameInput.setText("");
         selectedDate = LocalDate.now().plusDays(7);
         updateDateButton();
