@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
     private Button dateButton;
     private LinearLayout palette;
     private LinearLayout eventList;
+    private Spinner repeatSpinner;
     private LocalDate selectedDate;
     private int selectedColor;
     private final DateTimeFormatter displayDate = DateTimeFormatter.ofPattern("yyyy/MM/dd");
