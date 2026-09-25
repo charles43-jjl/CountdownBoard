@@ -58,11 +58,11 @@ public class CountdownWidgetService extends RemoteViewsService {
             }
 
             EventStore.Event event = events.get(position);
-            long days = ChronoUnit.DAYS.between(LocalDate.now(), event.date);
+            LocalDate shownDate = event.nextDate(LocalDate.now());\n            long days = ChronoUnit.DAYS.between(LocalDate.now(), shownDate);
 
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_event);
             views.setTextViewText(R.id.event_name, event.name);
-            views.setTextViewText(R.id.event_date, event.date.format(formatter));
+            views.setTextViewText(R.id.event_date, shownDate.format(formatter));
             views.setTextViewText(R.id.event_days, days == 0 ? "今天" : days + " 天");
             views.setTextColor(R.id.event_name, event.color);
             views.setTextColor(R.id.event_days, event.color);
